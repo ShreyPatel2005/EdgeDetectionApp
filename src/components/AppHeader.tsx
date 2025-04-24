@@ -16,7 +16,7 @@ const AppHeader = () => {
       
       <div className="flex space-x-2">
         <Button variant="outline" size="sm" className="gap-2" asChild>
-          <a href="https://github.com/yourusername/edge-vision-playground" target="_blank" rel="noreferrer">
+          <a href="https://github.com/ShreyPatel2005/EdgeDetectionApp" target="_blank" rel="noreferrer">
             <Github size={16} />
             <span>GitHub</span>
           </a>
