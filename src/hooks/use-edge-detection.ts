@@ -270,32 +270,48 @@ export function useEdgeDetection() {
 
   // Process an uploaded image
   const processImage = useCallback(async (sourceCanvas: HTMLCanvasElement, targetCanvas: HTMLCanvasElement) => {
-    const sourceCtx = sourceCanvas.getContext('2d');
-    const targetCtx = targetCanvas.getContext('2d');
-    
-    if (!sourceCtx || !targetCtx) return;
-    
-    const imgData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-    let processedData: ImageData;
-    
-    // Convert to grayscale
-    const grayData = toGrayscale(imgData);
-    
-    // Apply Gaussian blur (especially important for Laplacian)
-    let blurredData = grayData;
-    if (algorithm === "laplacian") {
-      blurredData = gaussianBlur(grayData, sigma);
-    }
-    
-    // Apply the selected edge detection algorithm
-    if (algorithm === "sobel") {
-      processedData = applySobel(blurredData, kernelSize, threshold);
-    } else {
-      processedData = applyLaplacian(blurredData, kernelSize, threshold);
-    }
-    
-    // Render the result
-    targetCtx.putImageData(processedData, 0, 0);
+    return new Promise<void>((resolve, reject) => {
+      try {
+        const sourceCtx = sourceCanvas.getContext('2d');
+        const targetCtx = targetCanvas.getContext('2d');
+        
+        if (!sourceCtx || !targetCtx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+        
+        // Ensure the canvas has valid dimensions
+        if (sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+          reject(new Error("Source canvas has zero width or height"));
+          return;
+        }
+        
+        const imgData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        let processedData: ImageData;
+        
+        // Convert to grayscale
+        const grayData = toGrayscale(imgData);
+        
+        // Apply Gaussian blur (especially important for Laplacian)
+        let blurredData = grayData;
+        if (algorithm === "laplacian") {
+          blurredData = gaussianBlur(grayData, sigma);
+        }
+        
+        // Apply the selected edge detection algorithm
+        if (algorithm === "sobel") {
+          processedData = applySobel(blurredData, kernelSize, threshold);
+        } else {
+          processedData = applyLaplacian(blurredData, kernelSize, threshold);
+        }
+        
+        // Render the result
+        targetCtx.putImageData(processedData, 0, 0);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }, [algorithm, kernelSize, threshold, sigma, toGrayscale, gaussianBlur, applySobel, applyLaplacian]);
 
   // Process a camera frame
@@ -304,6 +320,8 @@ export function useEdgeDetection() {
     
     try {
       await processImage(sourceCanvas, targetCanvas);
+    } catch (error) {
+      console.error("Error processing camera frame:", error);
     } finally {
       setIsProcessingFrame(false);
     }

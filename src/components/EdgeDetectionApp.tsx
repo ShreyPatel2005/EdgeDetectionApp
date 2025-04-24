@@ -50,6 +50,12 @@ const EdgeDetectionApp = () => {
 
       if (!ctx) return;
 
+      // Make sure video has dimensions before proceeding
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        animationFrameId = requestAnimationFrame(processVideoFrame);
+        return;
+      }
+
       // Set canvas dimensions based on quality setting
       const width = quality;
       const height = (video.videoHeight / video.videoWidth) * width;
@@ -95,6 +101,12 @@ const EdgeDetectionApp = () => {
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
+        // Ensure image has dimensions before proceeding
+        if (image.width === 0 || image.height === 0) {
+          toast.error("Image has no dimensions. Please try another image.");
+          return;
+        }
+        
         // Set canvas size based on quality but maintain aspect ratio
         const width = quality;
         const height = (image.height / image.width) * width;
@@ -106,8 +118,13 @@ const EdgeDetectionApp = () => {
         
         ctx.drawImage(image, 0, 0, width, height);
         
-        processImage(canvas, outputCanvasRef.current);
-        toast.success("Image processed successfully!");
+        // Process the image
+        processImage(canvas, outputCanvasRef.current)
+          .then(() => toast.success("Image processed successfully!"))
+          .catch((err) => {
+            console.error("Error processing image:", err);
+            toast.error("Failed to process image. Please try again.");
+          });
       }
     }
   };
@@ -165,8 +182,20 @@ const EdgeDetectionApp = () => {
     if (inputMode === "upload" && inputImage && canvasRef.current && outputCanvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
       if (ctx) {
+        // Make sure canvases have proper dimensions
+        if (canvasRef.current.width === 0 || canvasRef.current.height === 0) {
+          const width = quality;
+          const height = (inputImage.height / inputImage.width) * width;
+          
+          canvasRef.current.width = width;
+          canvasRef.current.height = height;
+          outputCanvasRef.current.width = width;
+          outputCanvasRef.current.height = height;
+        }
+        
         ctx.drawImage(inputImage, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        processImage(canvasRef.current, outputCanvasRef.current);
+        processImage(canvasRef.current, outputCanvasRef.current)
+          .catch(err => console.error("Error reprocessing image:", err));
       }
     }
   }, [algorithm, kernelSize, threshold, sigma, quality, inputImage, processImage, inputMode]);

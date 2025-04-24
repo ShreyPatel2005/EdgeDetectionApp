@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Image } from "lucide-react";
+import { Upload, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ImageUploaderProps {
@@ -54,7 +54,7 @@ const ImageUploader = ({ onImageUpload }: ImageUploaderProps) => {
       if (e.target?.result) {
         setPreviewUrl(e.target.result as string);
         
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           onImageUpload(img);
         };
